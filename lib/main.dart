@@ -27,7 +27,6 @@ class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
-
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -73,6 +72,25 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+class AppInfo {
+  final String nome;
+  final String descricao;
+  final IconData icone;
+
+  const AppInfo({
+    required this.nome,
+    required this.descricao,
+    required this.icone,
+  });
+}
+final List<AppInfo> meusApps = [
+  AppInfo(
+    nome: 'Calculadora de Vendas',
+    descricao: 'Calcula o valor do total de vendas',
+    icone: Icons.calculate,
+  ),
+];
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -82,13 +100,89 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Central de Vendas'),
       ),
-      body: const Center(
-        child: Text(
-          'Bem-vindo ao Monetiza!',
-          style: TextStyle(
-            fontSize: 20,
-          ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              child: const Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  'Central de Vendas',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Perfil'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sair'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
         ),
+      ),
+
+      body: GridView.builder(
+        padding: const EdgeInsets.all(15),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 2,
+        ),
+        itemCount: meusApps.length,
+        itemBuilder: (context, indice) {
+          final app = meusApps[indice];
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    app.icone,
+                    size: 36,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    app.nome,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    app.descricao,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
