@@ -1,46 +1,116 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const MeuApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+
+class MeuApp extends StatefulWidget {
+  const MeuApp({super.key});
+
+  @override
+  State<MeuApp> createState() => _MeuAppState();
+}
+
+class _MeuAppState extends State<MeuApp> {
+  Color corPrimaria = Colors.indigo;
+
+  void mudarCor(Color novaCor) {
+    setState(() {
+      corPrimaria = novaCor;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Monetiza',
+      title: 'Central de Apps',
       theme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
+        colorSchemeSeed: corPrimaria,
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
-      debugShowCheckedModeBanner: false,
+      home: SplashScreen(mudarCor: mudarCor),
     );
   }
 }
 
+
+class AppInfo {
+  final String nome;
+  final String descricao;
+  final IconData icone;
+
+  const AppInfo({
+    required this.nome,
+    required this.descricao,
+    required this.icone,
+  });
+}
+
+final List<AppInfo> meusApps = [
+  AppInfo(
+    nome: 'Calculadora de Gasolina',
+    descricao: 'Calcula litros e custo de uma viagem',
+    icone: Icons.local_gas_station,
+  ),
+  AppInfo(
+    nome: 'Calculadora de Churrasco',
+    descricao: 'Calcula carne, bebida e carvão',
+    icone: Icons.outdoor_grill,
+  ),
+  AppInfo(
+    nome: 'Frases Motivacionais',
+    descricao: 'Mostra frases aleatórias',
+    icone: Icons.auto_awesome,
+  ),
+  AppInfo(
+    nome: 'Lista de Tarefas',
+    descricao: 'Organiza suas tarefas do dia a dia',
+    icone: Icons.check_circle_outline,
+  ),
+  AppInfo(
+    nome: 'Placar de Pontos',
+    descricao: 'Acompanha a pontuação de jogadores',
+    icone: Icons.emoji_events,
+  ),
+];
+
+
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final void Function(Color) mudarCor;
+
+  const SplashScreen({super.key, required this.mudarCor});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
+
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    verificarLogin();
+  }
 
-    // Aguarda 5 segundos e depois vai para a Home
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
+  Future<void> verificarLogin() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    final prefs = await SharedPreferences.getInstance();
+    final nomeSalvo = prefs.getString("nomeUsuario");
+
+    if (!mounted) return;
+    if(nomeSalvo != null && nomeSalvo.isNotEmpty) {
+      Navigator.pushReplacement(context, 
+      MaterialPageRoute(builder: (context) => HomeScreen(mudarCor: widget.mudarCor),
+      )
       );
-    });
+    }else {
+      Navigator.pushReplacement(context, 
+      MaterialPageRoute(builder: (context) => LoginScreen(mudarCor: widget.mudarCor),
+      )
+      );
+    }
   }
 
   @override
@@ -51,14 +121,10 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image(
-              image: AssetImage('assets/logo.png'),
-              width: 250,
-              height: 250,
-            ),
-            SizedBox(height: 20),
+            Icon(Icons.apps, size: 80, color: Colors.white),
+            SizedBox(height: 16),
             Text(
-              'Monetiza',
+              'Central de Apps',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -72,34 +138,74 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-class AppInfo {
-  final String nome;
-  final String descricao;
-  final IconData icone;
 
-  const AppInfo({
-    required this.nome,
-    required this.descricao,
-    required this.icone,
-  });
+class LoginScreen extends StatefulWidget {
+  final void Function(Color) mudarCor;
+
+  const LoginScreen({super.key, required this.mudarCor});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
 }
-final List<AppInfo> meusApps = [
-  AppInfo(
-    nome: 'Calculadora de Vendas',
-    descricao: 'Calcula o valor do total de vendas',
-    icone: Icons.calculate,
-  ),
-];
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class _LoginScreenState extends State<LoginScreen> {
+  final nomeController = TextEditingController();
+
+  Future<void> entrar() async {
+    if (nomeController.text.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nomeUsuario', nomeController.text);
+
+    if(!mounted) return;
+
+    Navigator.pushReplacement(context, 
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(mudarCor: widget.mudarCor)
+      ),
+    ); 
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Central de Vendas'),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.apps, size: 60),
+            const SizedBox(height: 16),
+            const Text(
+              'Bem-vindo(a)!',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: nomeController,
+              decoration: const InputDecoration(labelText: 'Seu nome'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: entrar,
+              child: const Text('Entrar'),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+
+class HomeScreen extends StatelessWidget {
+  final void Function(Color) mudarCor;
+
+  const HomeScreen({super.key, required this.mudarCor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Central de Apps')),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -111,48 +217,45 @@ class HomeScreen extends StatelessWidget {
               child: const Align(
                 alignment: Alignment.bottomLeft,
                 child: Text(
-                  'Central de Vendas',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  'Central de Apps',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
             ),
             ListTile(
               leading: const Icon(Icons.home),
-              title: const Text('Home'),
+              title: const Text('Início'),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Perfil'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+              },
             ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Sair'),
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+              },
             ),
           ],
         ),
       ),
-
       body: GridView.builder(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 2,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.95,
         ),
         itemCount: meusApps.length,
         itemBuilder: (context, indice) {
           final app = meusApps[indice];
           return Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -161,28 +264,95 @@ class HomeScreen extends StatelessWidget {
                     size: 36,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     app.nome,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     app.descricao,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                    ),
+                    style: const TextStyle(fontSize: 11),
                   ),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+
+class ProfileScreen extends StatefulWidget {
+  final void Function(Color) mudarCor;
+
+  const ProfileScreen({super.key, required this.mudarCor});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String nome = '';
+
+  final List<Color> coresDisponiveis = [
+    Colors.indigo,
+    Colors.teal,
+    Colors.deepOrange,
+    Colors.pink,
+    Colors.green,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    carregarNome();
+  }
+
+  Future<void> carregarNome() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState((){
+      nome = prefs.getString('nomeUsuario') ?? '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Perfil')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const CircleAvatar(
+              radius: 50,
+              child: Icon(Icons.person, size: 40),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              nome,
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 32),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Cor do app',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+          ],
+        ),
       ),
     );
   }
